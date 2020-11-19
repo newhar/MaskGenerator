@@ -153,15 +153,13 @@ face_landmarks 는 0번부터 67번까지의 인덱스로 chin[0:17], left_eyebr
 코와 턱의 각도와 위치를 사용하여 얼굴의 중앙부분에 가능한 휘어지지 않도록 위치시킵니다.
 
 ## Results
+마스크를 제대로 착용한 이미지와 코밑으로 내린 잘못된 이미지를 생성합니다.
 
 ![image](https://user-images.githubusercontent.com/40593455/99353498-fd782d00-28e7-11eb-9c1f-9d6e0fe580b2.png)
 
-![image](https://user-images.githubusercontent.com/40593455/99353517-09fc8580-28e8-11eb-9de6-be3e5171e0f2.png)
+![correct_mask_result_bw](https://user-images.githubusercontent.com/40593455/99699626-81433c80-2ad5-11eb-83cf-16a411fcf04f.PNG)
 
-
-
-
-  
+![wrong_mask_result_bw](https://user-images.githubusercontent.com/40593455/99699634-84d6c380-2ad5-11eb-92f2-30e7e3a186cc.PNG)
 
 
 
