@@ -8,8 +8,10 @@ from PIL import Image, ImageFile
 __version__ = '0.3.0'
 
 # image load and save location
-MASK_LOC = "./images/blue-mask.png"
-DEST_LOC = "./withmask/"
+
+MASK_LOC = ["./images/default-mask.png", "./images/grey-mask.png"]
+CORRECT_LOC = "./correct_mask/"
+WRONG_LOC = "./wrong_mask/"
 
 # const index for face_landmarks
 CHIN_BOTTOM_IDX = 9
@@ -18,21 +20,24 @@ CHIN_RIGHT_IDX = 15
 
 NOSE_BRIDGE_IDX = 1
 
-def create_mask(image_path):
+def create_mask(image_path, idx):
     pic_path = image_path
-    mask_path = MASK_LOC
+    mask_path = MASK_LOC[idx%2]
     show = False
     model = "hog"
-    FaceMasker(pic_path, mask_path, show, model).mask()
+    mask_on_face = False
+    FaceMasker(pic_path, mask_path, show, model, mask_on_face).mask()
+
 
 class FaceMasker:
     KEY_FACIAL_FEATURES = ('nose_bridge', 'chin')
 
-    def __init__(self, face_path, mask_path, show=False, model='hog'):
+    def __init__(self, face_path, mask_path, show=False, model='hog', mask_on_face=True):
         self.face_path = face_path
         self.mask_path = mask_path
         self.show = show
         self.model = model
+        self.mask_on_face = mask_on_face
         self._face_img: ImageFile = None
         self._mask_img: ImageFile = None
 
@@ -41,10 +46,11 @@ class FaceMasker:
 
         # face_location : returns an array of bound boxes of human face
         face_image_np = face_recognition.load_image_file(self.face_path)
-        face_locations = face_recognition.face_locations(face_image_np, model=self.model) # model : hog(default), cnn(gpu)
+        face_locations = face_recognition.face_locations(face_image_np, model=self.model)
         face_landmarks = face_recognition.face_landmarks(face_image_np, face_locations)
         self._face_img = Image.fromarray(face_image_np)
         self._mask_img = Image.open(self.mask_path)
+        # self.mask_on_face = self.mask_on_face
 
         found_face = False
         for face_landmark in face_landmarks:
@@ -68,14 +74,20 @@ class FaceMasker:
 
     def _mask_face(self, face_landmark: dict):
         nose_bridge = face_landmark['nose_bridge']
-        nose_point = nose_bridge[len(nose_bridge) * 1 // 4] # 눈의 중간 지점 코 [28], nose_bridge[1]
+        if self.mask_on_face:
+            nose_point = nose_bridge[1] # 눈의 중간 지점 코 [28], nose_bridge[1]
+        else:
+            nose_point = nose_bridge[3]
         nose_v = np.array(nose_point)
 
         chin = face_landmark['chin']
         chin_len = len(chin)
         chin_bottom_point = chin[chin_len // 2] # 턱의 중간 [9]
         chin_bottom_v = np.array(chin_bottom_point)
-        print(chin_bottom_point)
+        # print(chin_bottom_v)
+
+        if not self.mask_on_face:
+            chin_bottom_v[1] -= 30
         chin_left_point = chin[chin_len // 8] # 왼쪽턱 귀밑 [3]
         chin_right_point = chin[chin_len * 7 // 8] # 오른쪽 귀밑[15]
 
@@ -116,13 +128,19 @@ class FaceMasker:
         box_x = center_x + int(offset * np.cos(radian)) - rotated_mask_img.width // 2
         box_y = center_y + int(offset * np.sin(radian)) - rotated_mask_img.height // 2
 
+        # print(box_x, box_y)
+        # box_y += 60
         # add mask
         self._face_img.paste(mask_img, (box_x, box_y), mask_img)
 
     def _save(self):
         # save mask img on 'DEST_LOC'
         path_splits = os.path.splitext(self.face_path)
-        mask_face_path = DEST_LOC + path_splits[0][7] + '_with_mask' + path_splits[1]
+        # print(path_splits)
+        mask_face_path = CORRECT_LOC + path_splits[0][7:9] + '_with_mask' + path_splits[1]
+        if not self.mask_on_face:
+            mask_face_path = WRONG_LOC + path_splits[0][7:9] + '_with_mask' + path_splits[1]
+
         self._face_img.save(mask_face_path)
         print(f'Save to {mask_face_path}')
 

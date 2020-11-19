@@ -9,7 +9,8 @@ images = [os.path.join(FACE_LOC, f) for f in os.listdir(FACE_LOC) if os.path.isf
 
 for i in range(len(images)):
     print("the path of the image is", images[i])
-    create_mask(images[i])
+    create_mask(images[i], i)
+    # create_wrong_mask(images[i])
 
 
 
